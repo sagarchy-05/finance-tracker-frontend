@@ -5,14 +5,15 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import './index.css';
 import { AuthProvider } from './context/AuthContext';
-import { BrowserRouter } from 'react-router-dom'; // ✅ Moved here
+import { BrowserRouter } from 'react-router-dom';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
       {' '}
-      {/* ✅ Wrap here */}
       <AuthProvider>
+        <SpeedInsights />
         <App />
       </AuthProvider>
     </BrowserRouter>
