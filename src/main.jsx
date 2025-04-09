@@ -14,7 +14,6 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <BrowserRouter>
       {' '}
       <AuthProvider>
-        <SpeedInsights />
         <App />
       </AuthProvider>
     </BrowserRouter>
