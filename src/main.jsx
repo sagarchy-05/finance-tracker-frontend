@@ -6,7 +6,8 @@ import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import './index.css';
 import { AuthProvider } from './context/AuthContext';
 import { BrowserRouter } from 'react-router-dom';
-import { SpeedInsights } from '@vercel/speed-insights/next';
+import { inject } from '@vercel/speed-insights';
+inject();
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
