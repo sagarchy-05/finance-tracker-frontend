@@ -12,7 +12,7 @@ import Dashboard from './pages/dashboard/Dashboard';
 import Transactions from './pages/dashboard/Transactions';
 import Budgets from './pages/dashboard/Budgets';
 import Insights from './pages/dashboard/Insights';
-import Charts from './pages/Dashboard/Charts';
+import Charts from './pages/dashboard/Charts';
 import NotFound from './pages/NotFound';
 import { startAuthWatcher } from './utils/authWatcher';
 
