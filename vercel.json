@@ -11,8 +11,5 @@
       "source": "/(.*)",
       "destination": "/"
     }
-  ],
-  "analytics": {
-    "enabled": true
-  }
+  ]
 }
