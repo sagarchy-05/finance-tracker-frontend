@@ -1,5 +1,5 @@
 // src/pages/auth/Login.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Alert from '../../components/Alert';
 import api from '../../api/axios';

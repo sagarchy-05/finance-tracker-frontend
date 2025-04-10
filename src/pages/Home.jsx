@@ -1,5 +1,6 @@
 // src/pages/Home.jsx
 import React from 'react';
+import { useEffect } from 'react';
 
 const Home = () => {
   useEffect(() => {
