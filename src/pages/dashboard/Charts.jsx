@@ -23,6 +23,10 @@ const Charts = () => {
   const [loading, setLoading] = useState(true);
 
   const fetchChartData = async () => {
+    useEffect(() => {
+      document.title = 'Charts - Finance Tracker';
+    }, []);
+
     try {
       setLoading(true);
       const [catRes, monthRes, budgetRes, dailyRes] = await Promise.all([

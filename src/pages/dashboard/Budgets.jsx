@@ -13,6 +13,10 @@ const Budget = () => {
   const [showModal, setShowModal] = useState(false);
   const [editMode, setEditMode] = useState(false);
 
+  useEffect(() => {
+    document.title = 'Budgets - Finance Tracker';
+  }, []);
+
   const fetchBudgets = async () => {
     try {
       const res = await api.get('/budgets');

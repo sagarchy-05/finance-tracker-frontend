@@ -20,6 +20,7 @@ export const AuthProvider = ({ children }) => {
   const login = (newToken) => {
     localStorage.setItem('token', newToken);
     setToken(newToken);
+    setUser({}); // You could decode user from token here
   };
 
   const logout = () => {

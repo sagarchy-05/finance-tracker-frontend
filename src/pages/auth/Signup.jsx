@@ -6,6 +6,10 @@ import api from '../../api/axios';
 import LoadingButton from '../../components/LoadingButton';
 
 const Signup = () => {
+  useEffect(() => {
+    document.title = 'Signup - Finance Tracker';
+  }, []);
+
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',

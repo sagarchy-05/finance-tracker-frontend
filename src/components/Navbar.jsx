@@ -1,9 +1,15 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useEffect, useState } from 'react';
 
 const Navbar = () => {
   const { token, logout } = useAuth();
   const navigate = useNavigate();
+  const [isAuth, setIsAuth] = useState(!!token);
+
+  useEffect(() => {
+    setIsAuth(!!token);
+  }, [token]);
 
   const handleLogout = () => {
     logout();
@@ -18,7 +24,7 @@ const Navbar = () => {
 
       <div className='collapse navbar-collapse justify-content-end'>
         <ul className='navbar-nav'>
-          {!token ? (
+          {!isAuth ? (
             <>
               <li className='nav-item'>
                 <Link className='nav-link' to='/login'>
@@ -39,13 +45,13 @@ const Navbar = () => {
                 </Link>
               </li>
               <li className='nav-item'>
-                <Link className='nav-link' to='/Transactions'>
-                  Transactions
+                <Link className='nav-link' to='/Budgets'>
+                  Budgets
                 </Link>
               </li>
               <li className='nav-item'>
-                <Link className='nav-link' to='/Budgets'>
-                  Budgets
+                <Link className='nav-link' to='/Transactions'>
+                  Transactions
                 </Link>
               </li>
               <li className='nav-item'>
@@ -55,7 +61,7 @@ const Navbar = () => {
               </li>
               <li className='nav-item'>
                 <Link className='nav-link' to='/Insights'>
-                  Insights
+                  AI Insights
                 </Link>
               </li>
               <li className='nav-item'>

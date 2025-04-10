@@ -3,6 +3,10 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 
 const NotFound = () => {
+  useEffect(() => {
+    document.title = '404 - Finance Tracker';
+  }, []);
+
   return (
     <div className='container text-center mt-5'>
       <h1 className='display-3 text-danger'>404</h1>

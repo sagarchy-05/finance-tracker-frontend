@@ -13,6 +13,10 @@ const Dashboard = () => {
   const [alert, setAlert] = useState({ visible: false, message: '', type: '' });
   const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    document.title = 'Dashboard - Finance Tracker';
+  }, []);
+
   const fetchDashboardData = async () => {
     try {
       const [catRes, monthRes, budgetRes, dailyRes] = await Promise.all([

@@ -11,6 +11,10 @@ const Insights = () => {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
+  useEffect(() => {
+    document.title = ' AI Insights - Finance Tracker';
+  }, []);
+
   const fetchInsights = async () => {
     setLoading(true);
     try {

@@ -7,6 +7,10 @@ const ResendEmail = () => {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
+  useEffect(() => {
+    document.title = 'Resend Email - Finance Tracker';
+  }, []);
+
   const handleResend = async (e) => {
     e.preventDefault();
     setMessage('');

@@ -11,6 +11,10 @@ const Login = () => {
   const [alert, setAlert] = useState({ type: '', message: '', visible: false });
   const [loading, setLoading] = useState(false); // <-- Added this line
 
+  useEffect(() => {
+    document.title = 'Signin - Finance Tracker';
+  }, []);
+
   const handleChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };

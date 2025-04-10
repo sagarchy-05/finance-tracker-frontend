@@ -14,6 +14,10 @@ const Transactions = () => {
   const [loading, setLoading] = useState(true);
   const [budgets, setBudgets] = useState([]);
 
+  useEffect(() => {
+    document.title = 'Transactions - Finance Tracker';
+  }, []);
+
   const fetchTransactions = async () => {
     setLoading(true);
     try {

@@ -2,6 +2,10 @@
 import React from 'react';
 
 const Home = () => {
+  useEffect(() => {
+    document.title = 'Home - Finance Tracker';
+  }, []);
+
   return (
     <div className='text-center mt-5'>
       <h1 className='mb-3'>Welcome to FinanceTracker 💸</h1>
