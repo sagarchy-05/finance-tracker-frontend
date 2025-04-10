@@ -106,7 +106,7 @@ const TransactionModal = ({ show, onHide, onSave, transaction, budgets }) => {
           <div className='modal-body'>
             <form onSubmit={handleSubmit}>
               <div className='mb-3'>
-                <label>Amount</label>
+                <label>Amount (₹)</label>
                 <input
                   type='number'
                   className='form-control'

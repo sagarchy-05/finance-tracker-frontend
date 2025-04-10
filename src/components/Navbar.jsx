@@ -1,15 +1,10 @@
+// src/components/Navbar.jsx
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { useEffect, useState } from 'react';
 
 const Navbar = () => {
   const { token, logout } = useAuth();
   const navigate = useNavigate();
-  const [isAuth, setIsAuth] = useState(!!token);
-
-  useEffect(() => {
-    setIsAuth(!!token);
-  }, [token]);
 
   const handleLogout = () => {
     logout();
@@ -24,7 +19,7 @@ const Navbar = () => {
 
       <div className='collapse navbar-collapse justify-content-end'>
         <ul className='navbar-nav'>
-          {!isAuth ? (
+          {!token ? (
             <>
               <li className='nav-item'>
                 <Link className='nav-link' to='/login'>

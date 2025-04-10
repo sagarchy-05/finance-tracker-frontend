@@ -48,7 +48,7 @@ const Budget = () => {
         if (newLimit < currentSpent) {
           setAlert({
             type: 'danger',
-            message: `New limit ($${newLimit}) can't be less than spent amount ($${currentSpent})`,
+            message: `New limit (₹${newLimit}) can't be less than spent amount (₹${currentSpent})`,
             visible: true,
           });
           setLoading(false);
@@ -102,7 +102,17 @@ const Budget = () => {
   };
 
   const handleDelete = async (category) => {
+    if (category === 'Others') {
+      setAlert({
+        type: 'danger',
+        message: "Default category 'Others' cannot be deleted.",
+        visible: true,
+      });
+      return;
+    }
+
     if (!window.confirm(`Delete budget for ${category}?`)) return;
+
     try {
       await api.delete(`/budgets/${category}`);
       fetchBudgets();
@@ -155,9 +165,9 @@ const Budget = () => {
             {budgets.map((budget) => (
               <tr key={budget.category}>
                 <td>{budget.category}</td>
-                <td>${budget.limit.toFixed(2)}</td>
-                <td>${budget.spent?.toFixed(2) || 0}</td>
-                <td>${(budget.limit - (budget.spent || 0)).toFixed(2)}</td>
+                <td>₹{budget.limit.toFixed(2)}</td>
+                <td>₹{budget.spent?.toFixed(2) || 0}</td>
+                <td>₹{(budget.limit - (budget.spent || 0)).toFixed(2)}</td>
                 <td>
                   <button
                     className='btn btn-sm btn-warning me-2'
@@ -168,6 +178,7 @@ const Budget = () => {
                   <button
                     className='btn btn-sm btn-danger'
                     onClick={() => handleDelete(budget.category)}
+                    disabled={budget.category === 'Others'}
                   >
                     Delete
                   </button>

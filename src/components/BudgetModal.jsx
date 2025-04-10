@@ -38,7 +38,7 @@ const BudgetModal = ({
             />
           </Form.Group>
           <Form.Group className='mb-3'>
-            <Form.Label>Limit</Form.Label>
+            <Form.Label>Limit (₹)</Form.Label>
             <Form.Control
               type='number'
               name='limit'

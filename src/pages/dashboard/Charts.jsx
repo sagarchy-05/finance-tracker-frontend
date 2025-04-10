@@ -21,12 +21,11 @@ const Charts = () => {
   const [budgetData, setBudgetData] = useState([]);
   const [dailyData, setDailyData] = useState([]);
   const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    document.title = 'Charts - Finance Tracker';
+  }, []);
 
   const fetchChartData = async () => {
-    useEffect(() => {
-      document.title = 'Charts - Finance Tracker';
-    }, []);
-
     try {
       setLoading(true);
       const [catRes, monthRes, budgetRes, dailyRes] = await Promise.all([

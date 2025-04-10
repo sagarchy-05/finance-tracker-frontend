@@ -153,7 +153,7 @@ const Transactions = () => {
                     <tr key={tx._id}>
                       <td>{new Date(tx.date).toLocaleDateString()}</td>
                       <td>{tx.category}</td>
-                      <td>{tx.amount}</td>
+                      <td>₹{tx.amount}</td>
                       <td>{tx.description}</td>
                       <td>
                         <button

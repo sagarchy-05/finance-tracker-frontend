@@ -4,12 +4,14 @@ import { useNavigate } from 'react-router-dom';
 import Alert from '../../components/Alert';
 import api from '../../api/axios';
 import LoadingButton from '../../components/LoadingButton';
+import { useAuth } from '../../context/AuthContext'; // ✅ Import useAuth
 
 const Login = () => {
   const navigate = useNavigate();
+  const { login } = useAuth(); // ✅ Use login from context
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [alert, setAlert] = useState({ type: '', message: '', visible: false });
-  const [loading, setLoading] = useState(false); // <-- Added this line
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     document.title = 'Signin - Finance Tracker';
@@ -21,11 +23,11 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true); // <-- Set loading true at start
+    setLoading(true);
 
     try {
       const res = await api.post('/auth/login', formData);
-      localStorage.setItem('token', res.data.token);
+      login(res.data.token); // ✅ Updates context
 
       setAlert({
         type: 'success',
@@ -41,7 +43,7 @@ const Login = () => {
         visible: true,
       });
     } finally {
-      setLoading(false); // <-- Always reset loading at the end
+      setLoading(false);
     }
   };
 
