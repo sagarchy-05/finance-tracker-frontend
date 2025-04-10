@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
-import { Routes, Route, useNavigate } from 'react-router-dom'; // ✅ No BrowserRouter here
+import { Routes, Route, useNavigate } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 
 import Home from './pages/Home';
 import Login from './pages/auth/Login';
@@ -93,6 +94,7 @@ function App() {
       </div>
 
       <Footer />
+      <SpeedInsights />
     </div>
   );
 }

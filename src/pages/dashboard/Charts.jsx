@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import api from '../../api/axios';
 import ChartComponent from '../../components/ChartComponent';
+import Spinner from '../../components/Spinner';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
@@ -19,9 +20,11 @@ const Charts = () => {
   const [monthlyData, setMonthlyData] = useState([]);
   const [budgetData, setBudgetData] = useState([]);
   const [dailyData, setDailyData] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const fetchChartData = async () => {
     try {
+      setLoading(true);
       const [catRes, monthRes, budgetRes, dailyRes] = await Promise.all([
         api.get('/charts/category-totals'),
         api.get('/charts/monthly-trends'),
@@ -52,6 +55,8 @@ const Charts = () => {
       );
     } catch (error) {
       console.error('Failed to fetch chart data:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -92,61 +97,65 @@ const Charts = () => {
         </button>
       </div>
 
-      <div ref={chartRef}>
-        <ChartComponent
-          title='Category-wise Spending'
-          type='pie'
-          data={categoryData}
-          dataKey='total'
-          nameKey='category'
-        />
+      {loading ? (
+        <Spinner />
+      ) : (
+        <div ref={chartRef}>
+          <ChartComponent
+            title='Category-wise Spending'
+            type='pie'
+            data={categoryData}
+            dataKey='total'
+            nameKey='category'
+          />
 
-        <ChartComponent
-          title='Monthly Spending Trend'
-          type='line'
-          data={monthlyData}
-          dataKey='total'
-          nameKey='month'
-        />
+          <ChartComponent
+            title='Monthly Spending Trend'
+            type='line'
+            data={monthlyData}
+            dataKey='total'
+            nameKey='month'
+          />
 
-        <div className='mb-5'>
-          <h4>Budget vs Actual</h4>
-          {budgetData.length === 0 ? (
-            <p className='text-muted'>No budget data available.</p>
-          ) : (
-            budgetData.map((item, index) => {
-              const percentage = Math.min(
-                (item.spent / item.budget) * 100,
-                100
-              );
-              return (
-                <div key={index} className='mb-3'>
-                  <strong>{item.category}</strong>
-                  <div className='progress'>
-                    <div
-                      className={`progress-bar ${
-                        percentage >= 100 ? 'bg-danger' : 'bg-success'
-                      }`}
-                      role='progressbar'
-                      style={{ width: `${percentage}%` }}
-                    >
-                      ₹{item.spent} / ₹{item.budget}
+          <div className='mb-5'>
+            <h4>Budget vs Actual</h4>
+            {budgetData.length === 0 ? (
+              <p className='text-muted'>No budget data available.</p>
+            ) : (
+              budgetData.map((item, index) => {
+                const percentage = Math.min(
+                  (item.spent / item.budget) * 100,
+                  100
+                );
+                return (
+                  <div key={index} className='mb-3'>
+                    <strong>{item.category}</strong>
+                    <div className='progress'>
+                      <div
+                        className={`progress-bar ${
+                          percentage >= 100 ? 'bg-danger' : 'bg-success'
+                        }`}
+                        role='progressbar'
+                        style={{ width: `${percentage}%` }}
+                      >
+                        ₹{item.spent} / ₹{item.budget}
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })
-          )}
-        </div>
+                );
+              })
+            )}
+          </div>
 
-        <ChartComponent
-          title='Daily Expense Summary'
-          type='bar'
-          data={dailyData}
-          dataKey='total'
-          nameKey='date'
-        />
-      </div>
+          <ChartComponent
+            title='Daily Expense Summary'
+            type='bar'
+            data={dailyData}
+            dataKey='total'
+            nameKey='date'
+          />
+        </div>
+      )}
     </div>
   );
 };

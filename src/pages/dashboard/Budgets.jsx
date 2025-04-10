@@ -2,11 +2,12 @@ import React, { useEffect, useState } from 'react';
 import api from '../../api/axios';
 import Alert from '../../components/Alert';
 import BudgetModal from '../../components/BudgetModal';
+import Spinner from '../../components/Spinner';
 
 const Budget = () => {
   const [budgets, setBudgets] = useState([]);
   const [formData, setFormData] = useState({ category: '', limit: '' });
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [alert, setAlert] = useState({ type: '', message: '', visible: false });
   const [editId, setEditId] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -18,6 +19,8 @@ const Budget = () => {
       setBudgets(res.data);
     } catch (err) {
       console.error('Failed to fetch budgets:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -76,7 +79,6 @@ const Budget = () => {
         message: error.response?.data?.message || 'Failed to save budget',
         visible: true,
       });
-    } finally {
       setLoading(false);
     }
   };
@@ -127,41 +129,50 @@ const Budget = () => {
         />
       )}
 
-      <table className='table table-bordered'>
-        <thead className='table-light'>
-          <tr>
-            <th>Category</th>
-            <th>Limit</th>
-            <th>Spent</th>
-            <th>Remaining</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {budgets.map((budget) => (
-            <tr key={budget.category}>
-              <td>{budget.category}</td>
-              <td>${budget.limit.toFixed(2)}</td>
-              <td>${budget.spent?.toFixed(2) || 0}</td>
-              <td>${(budget.limit - (budget.spent || 0)).toFixed(2)}</td>
-              <td>
-                <button
-                  className='btn btn-sm btn-warning me-2'
-                  onClick={() => handleEdit(budget)}
-                >
-                  Edit
-                </button>
-                <button
-                  className='btn btn-sm btn-danger'
-                  onClick={() => handleDelete(budget.category)}
-                >
-                  Delete
-                </button>
-              </td>
+      {loading ? (
+        <div
+          className='d-flex justify-content-center align-items-center'
+          style={{ minHeight: '200px' }}
+        >
+          <Spinner />
+        </div>
+      ) : (
+        <table className='table table-bordered'>
+          <thead className='table-light'>
+            <tr>
+              <th>Category</th>
+              <th>Limit</th>
+              <th>Spent</th>
+              <th>Remaining</th>
+              <th>Actions</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {budgets.map((budget) => (
+              <tr key={budget.category}>
+                <td>{budget.category}</td>
+                <td>${budget.limit.toFixed(2)}</td>
+                <td>${budget.spent?.toFixed(2) || 0}</td>
+                <td>${(budget.limit - (budget.spent || 0)).toFixed(2)}</td>
+                <td>
+                  <button
+                    className='btn btn-sm btn-warning me-2'
+                    onClick={() => handleEdit(budget)}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    className='btn btn-sm btn-danger'
+                    onClick={() => handleDelete(budget.category)}
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
 
       <BudgetModal
         show={showModal}

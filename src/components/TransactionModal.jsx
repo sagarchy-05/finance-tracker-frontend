@@ -11,6 +11,16 @@ const TransactionModal = ({ show, onHide, onSave, transaction, budgets }) => {
 
   const options = budgets.map((b) => ({ label: b, value: b }));
 
+  // Lock scroll on modal open
+  useEffect(() => {
+    if (show) {
+      document.body.classList.add('modal-open');
+    } else {
+      document.body.classList.remove('modal-open');
+    }
+    return () => document.body.classList.remove('modal-open');
+  }, [show]);
+
   useEffect(() => {
     if (transaction && Object.keys(transaction).length > 0) {
       setAmount(transaction.amount || '');
@@ -30,7 +40,6 @@ const TransactionModal = ({ show, onHide, onSave, transaction, budgets }) => {
     e.preventDefault();
     setLoading(true);
 
-    // Validate future date
     const todayStr = new Date().toISOString().split('T')[0];
     if (date > todayStr) {
       window.showToast?.('Transaction date cannot be in the future.', 'danger');
@@ -79,7 +88,7 @@ const TransactionModal = ({ show, onHide, onSave, transaction, budgets }) => {
 
   return (
     <div className='modal show d-block' tabIndex='-1' role='dialog'>
-      <div className='modal-dialog' role='document'>
+      <div className='modal-dialog modal-dialog-centered' role='document'>
         <div className='modal-content'>
           <div className='modal-header'>
             <h5 className='modal-title'>
@@ -93,6 +102,7 @@ const TransactionModal = ({ show, onHide, onSave, transaction, budgets }) => {
               onClick={onHide}
             ></button>
           </div>
+
           <div className='modal-body'>
             <form onSubmit={handleSubmit}>
               <div className='mb-3'>
@@ -114,9 +124,15 @@ const TransactionModal = ({ show, onHide, onSave, transaction, budgets }) => {
                   onChange={(selected) => setCategory(selected.value)}
                   placeholder='Select category'
                   styles={{
-                    menu: (provided) => ({
-                      ...provided,
-                      maxHeight: '160px',
+                    menu: (base) => ({
+                      ...base,
+                      maxHeight: 200,
+                      overflowY: 'auto',
+                      scrollbarWidth: 'thin',
+                    }),
+                    menuList: (base) => ({
+                      ...base,
+                      maxHeight: 200,
                       overflowY: 'auto',
                     }),
                   }}
@@ -131,7 +147,7 @@ const TransactionModal = ({ show, onHide, onSave, transaction, budgets }) => {
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
                   required
-                  max={new Date().toISOString().split('T')[0]} // restrict to today
+                  max={new Date().toISOString().split('T')[0]}
                 />
               </div>
 

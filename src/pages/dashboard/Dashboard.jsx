@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import api from '../../api/axios';
 import Chart from '../../components/ChartComponent';
 import Alert from '../../components/Alert';
+import Spinner from '../../components/Spinner';
 
 const Dashboard = () => {
   const [categoryTotals, setCategoryTotals] = useState(null);
@@ -53,7 +54,7 @@ const Dashboard = () => {
       )}
 
       {loading ? (
-        <div className='text-center'>Loading dashboard...</div>
+        <Spinner />
       ) : (
         <div className='row g-4'>
           <div className='col-md-6'>

@@ -1,0 +1,26 @@
+/* Custom modal fix for double scrollbars */
+.modal-open {
+  overflow: hidden !important;
+}
+
+.modal-body {
+  overflow-y: auto;
+  max-height: calc(100vh - 200px);
+}
+
+/* Optional: Pretty scrollbars */
+.css-26l3qy-menu,
+.css-4ljt47-MenuList {
+  scrollbar-width: thin;
+}
+
+.css-26l3qy-menu::-webkit-scrollbar,
+.css-4ljt47-MenuList::-webkit-scrollbar {
+  width: 6px;
+}
+
+.css-26l3qy-menu::-webkit-scrollbar-thumb,
+.css-4ljt47-MenuList::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 3px;
+}
