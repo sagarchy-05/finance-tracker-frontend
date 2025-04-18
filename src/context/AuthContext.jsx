@@ -5,22 +5,38 @@ const AuthContext = createContext();
 
 // Create a provider component
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null); // optional user info
+  const [user, setUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('token') || '');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (token) {
-      // You could decode token here to get user info or make an API call
-      setUser({}); // Replace with actual user info if needed
-    }
-    setLoading(false);
+    const initializeAuth = async () => {
+      if (token) {
+        try {
+          // Decode token to get user info
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          setUser({
+            name: payload.name || '',
+            email: payload.email || '',
+          });
+        } catch (error) {
+          console.error('Error decoding token:', error);
+          setUser(null);
+        }
+      }
+      setLoading(false);
+    };
+
+    initializeAuth();
   }, [token]);
 
-  const login = (newToken) => {
+  const login = (newToken, userData) => {
     localStorage.setItem('token', newToken);
     setToken(newToken);
-    setUser({}); // You could decode user from token here
+    setUser({
+      name: userData?.name || '',
+      email: userData?.email || '',
+    });
   };
 
   const logout = () => {
@@ -30,7 +46,15 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, loading }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        login,
+        logout,
+        loading,
+      }}
+    >
       {!loading && children}
     </AuthContext.Provider>
   );

@@ -1,4 +1,3 @@
-// src/pages/auth/Signup.jsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Alert from '../../components/Alert';
@@ -23,7 +22,7 @@ const Signup = () => {
     visible: false,
   });
 
-  const [loading, setLoading] = useState(false); // <-- Added loading state
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData((prev) => ({
@@ -34,7 +33,7 @@ const Signup = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true); // <-- Set loading true at start
+    setLoading(true);
 
     try {
       const res = await api.post('/auth/signup', formData);
@@ -45,7 +44,7 @@ const Signup = () => {
         visible: true,
       });
 
-      setTimeout(() => navigate('/login'), 10000);
+      setTimeout(() => navigate('/login'), 3000);
     } catch (error) {
       setAlert({
         type: 'danger',
@@ -53,76 +52,98 @@ const Signup = () => {
         visible: true,
       });
     } finally {
-      setLoading(false); // <-- Always reset loading at the end
+      setLoading(false);
     }
   };
 
   return (
-    <div className='container' style={{ maxWidth: '500px' }}>
-      <h2 className='mb-4 text-center'>Sign Up</h2>
+    <div className='container'>
+      <div className='row justify-content-center'>
+        <div className='col-12 col-md-8 col-lg-6 col-xl-5'>
+          <div className='card shadow-sm mt-4 mt-md-5'>
+            <div className='card-body p-4 p-md-5'>
+              <h2 className='mb-4 text-center fw-bold'>Sign Up</h2>
 
-      {alert.visible && (
-        <Alert
-          type={alert.type}
-          message={alert.message}
-          onClose={() => setAlert({ ...alert, visible: false })}
-        />
-      )}
+              {alert.visible && (
+                <Alert
+                  type={alert.type}
+                  message={alert.message}
+                  onClose={() => setAlert({ ...alert, visible: false })}
+                  className='mb-4'
+                />
+              )}
 
-      <form onSubmit={handleSubmit}>
-        <div className='mb-3'>
-          <label htmlFor='name' className='form-label'>
-            Full Name
-          </label>
-          <input
-            type='text'
-            className='form-control'
-            id='name'
-            name='name'
-            value={formData.name}
-            onChange={handleChange}
-            required
-          />
+              <form onSubmit={handleSubmit}>
+                <div className='mb-3'>
+                  <label htmlFor='name' className='form-label fw-medium'>
+                    Full Name
+                  </label>
+                  <input
+                    type='text'
+                    className='form-control form-control-lg'
+                    id='name'
+                    name='name'
+                    value={formData.name}
+                    onChange={handleChange}
+                    required
+                    autoFocus
+                  />
+                </div>
+
+                <div className='mb-3'>
+                  <label htmlFor='email' className='form-label fw-medium'>
+                    Email address
+                  </label>
+                  <input
+                    type='email'
+                    className='form-control form-control-lg'
+                    id='email'
+                    name='email'
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+
+                <div className='mb-4'>
+                  <label htmlFor='password' className='form-label fw-medium'>
+                    Password
+                  </label>
+                  <input
+                    type='password'
+                    className='form-control form-control-lg'
+                    id='password'
+                    name='password'
+                    value={formData.password}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+
+                <div className='d-grid gap-2'>
+                  <LoadingButton
+                    type='submit'
+                    className='btn-primary py-2'
+                    loading={loading}
+                    size='lg'
+                  >
+                    Sign Up
+                  </LoadingButton>
+                </div>
+              </form>
+
+              <div className='text-center mt-4'>
+                <p className='mb-0'>
+                  Already have an account?{' '}
+                  <a href='/login' className='text-decoration-none'>
+                    Login
+                  </a>
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
-
-        <div className='mb-3'>
-          <label htmlFor='email' className='form-label'>
-            Email address
-          </label>
-          <input
-            type='email'
-            className='form-control'
-            id='email'
-            name='email'
-            value={formData.email}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <div className='mb-3'>
-          <label htmlFor='password' className='form-label'>
-            Password
-          </label>
-          <input
-            type='password'
-            className='form-control'
-            id='password'
-            name='password'
-            value={formData.password}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <LoadingButton
-          type='submit'
-          className='btn-primary w-100'
-          loading={loading}
-        >
-          Sign Up
-        </LoadingButton>
-      </form>
+      </div>
     </div>
   );
 };

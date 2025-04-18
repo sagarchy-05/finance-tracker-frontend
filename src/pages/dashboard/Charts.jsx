@@ -1,164 +1,200 @@
-// src/pages/Dashboard/Charts.jsx
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import api from '../../api/axios';
 import ChartComponent from '../../components/ChartComponent';
+import { Button } from 'react-bootstrap';
 import Spinner from '../../components/Spinner';
 import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
-
-const formatDate = (input, type = 'date') => {
-  const options =
-    type === 'month'
-      ? { month: 'short', year: 'numeric' }
-      : { day: '2-digit', month: 'short' };
-  return new Date(input).toLocaleDateString('en-IN', options);
-};
+import { jsPDF } from 'jspdf';
 
 const Charts = () => {
-  const chartRef = useRef();
   const [categoryData, setCategoryData] = useState([]);
   const [monthlyData, setMonthlyData] = useState([]);
   const [budgetData, setBudgetData] = useState([]);
   const [dailyData, setDailyData] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const formatDate = (input, type = 'date') => {
+    const options =
+      type === 'month'
+        ? { month: 'short', year: 'numeric' }
+        : { day: '2-digit', month: 'short' };
+    return new Date(input).toLocaleDateString('en-IN', options);
+  };
+
   useEffect(() => {
-    document.title = 'Charts - Finance Tracker';
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [catRes, monthRes, budgetRes, dailyRes] = await Promise.all([
+          api.get('/charts/category-totals'),
+          api.get('/charts/monthly-trends'),
+          api.get('/charts/budget-vs-actual'),
+          api.get('/charts/daily-summary'),
+        ]);
+
+        setCategoryData(
+          Array.isArray(catRes.data?.data) ? catRes.data.data : []
+        );
+        setMonthlyData(
+          (Array.isArray(monthRes.data?.data) ? monthRes.data.data : [])
+            .sort((a, b) => new Date(a.month) - new Date(b.month))
+            .map((item) => ({
+              ...item,
+              month: formatDate(item.month, 'month'),
+            }))
+        );
+        setBudgetData(
+          Array.isArray(budgetRes.data?.data) ? budgetRes.data.data : []
+        );
+        setDailyData(
+          (Array.isArray(dailyRes.data?.data) ? dailyRes.data.data : [])
+            .sort((a, b) => new Date(a.date) - new Date(b.date))
+            .map((item) => ({
+              ...item,
+              date: formatDate(item.date, 'date'),
+            }))
+        );
+      } catch (err) {
+        console.error('Error fetching chart data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, []);
 
-  const fetchChartData = async () => {
+  const exportPDF = async () => {
+    const input = document.getElementById('charts-section');
     try {
-      setLoading(true);
-      const [catRes, monthRes, budgetRes, dailyRes] = await Promise.all([
-        api.get('/charts/category-totals'),
-        api.get('/charts/monthly-trends'),
-        api.get('/charts/budget-vs-actual'),
-        api.get('/charts/daily-summary'),
-      ]);
+      const canvas = await html2canvas(input, {
+        scale: 2,
+        logging: false,
+        useCORS: true,
+      });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgWidth = 190;
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 10;
 
-      setCategoryData(catRes.data.data);
+      pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
 
-      setMonthlyData(
-        monthRes.data.data
-          .sort((a, b) => new Date(a.month) - new Date(b.month))
-          .map((item) => ({
-            ...item,
-            month: formatDate(item.month, 'month'),
-          }))
-      );
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
 
-      setBudgetData(budgetRes.data.data);
-
-      setDailyData(
-        dailyRes.data.data
-          .sort((a, b) => new Date(a.date) - new Date(b.date))
-          .map((item) => ({
-            ...item,
-            date: formatDate(item.date, 'date'),
-          }))
-      );
+      pdf.save('financial-charts.pdf');
     } catch (error) {
-      console.error('Failed to fetch chart data:', error);
-    } finally {
-      setLoading(false);
+      console.error('Error generating PDF:', error);
     }
   };
 
-  useEffect(() => {
-    fetchChartData();
-  }, []);
-
-  const handleDownloadPDF = async () => {
-    const input = chartRef.current;
-    const canvas = await html2canvas(input, { scale: 2 });
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF({
-      orientation: 'portrait',
-      unit: 'mm',
-      format: 'a4',
-    });
-
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
-    const imgProps = pdf.getImageProperties(imgData);
-    const ratio = Math.min(
-      pageWidth / imgProps.width,
-      pageHeight / imgProps.height
-    );
-    const imgWidth = imgProps.width * ratio;
-    const imgHeight = imgProps.height * ratio;
-
-    pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
-    pdf.save('charts.pdf');
-  };
+  if (loading) return <Spinner fullScreen />;
 
   return (
-    <div className='container'>
-      <div className='d-flex justify-content-between align-items-center mb-4'>
-        <h2>Spending Charts</h2>
-        <button onClick={handleDownloadPDF} className='btn btn-primary'>
-          Download PDF
-        </button>
+    <div className='container py-3'>
+      <div className='d-flex flex-column flex-md-row justify-content-between align-items-center mb-4'>
+        <h2 className='fw-bold mb-3 mb-md-0'>Financial Insights</h2>
+        <Button
+          variant='primary'
+          onClick={exportPDF}
+          disabled={
+            !categoryData.length &&
+            !monthlyData.length &&
+            !budgetData.length &&
+            !dailyData.length
+          }
+          className='ms-md-3'
+        >
+          <i className='bi bi-file-earmark-pdf me-2'></i>
+          Export Report
+        </Button>
       </div>
 
-      {loading ? (
-        <Spinner />
-      ) : (
-        <div ref={chartRef}>
-          <ChartComponent
-            title='Category-wise Spending'
-            type='pie'
-            data={categoryData}
-            dataKey='total'
-            nameKey='category'
-          />
-
-          <ChartComponent
-            title='Monthly Spending Trend'
-            type='line'
-            data={monthlyData}
-            dataKey='total'
-            nameKey='month'
-          />
-
-          <div className='mb-5'>
-            <h4>Budget vs Actual</h4>
-            {budgetData.length === 0 ? (
-              <p className='text-muted'>No budget data available.</p>
-            ) : (
-              budgetData.map((item, index) => {
-                const percentage = Math.min(
-                  (item.spent / item.budget) * 100,
-                  100
-                );
-                return (
-                  <div key={index} className='mb-3'>
-                    <strong>{item.category}</strong>
-                    <div className='progress'>
-                      <div
-                        className={`progress-bar ${
-                          percentage >= 100 ? 'bg-danger' : 'bg-success'
-                        }`}
-                        role='progressbar'
-                        style={{ width: `${percentage}%` }}
-                      >
-                        ₹{item.spent} / ₹{item.budget}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })
-            )}
+      <div id='charts-section' className='row g-4'>
+        {categoryData.length > 0 && (
+          <div className='col-12 col-lg-6'>
+            <ChartComponent
+              title='Spending by Category'
+              type='pie'
+              labels={categoryData.map((item) => item.category)}
+              data={categoryData.map((item) => item.total)}
+            />
           </div>
+        )}
 
-          <ChartComponent
-            title='Daily Expense Summary'
-            type='bar'
-            data={dailyData}
-            dataKey='total'
-            nameKey='date'
-          />
-        </div>
-      )}
+        {monthlyData.length > 0 && (
+          <div className='col-12 col-lg-6'>
+            <ChartComponent
+              title='Monthly Spending Trend'
+              type='line'
+              labels={monthlyData.map((item) => item.month)}
+              data={monthlyData.map((item) => item.total)}
+            />
+          </div>
+        )}
+
+        {budgetData.length > 0 && (
+          <div className='col-12'>
+            <ChartComponent
+              title='Budget vs Actual Spending'
+              type='bar'
+              labels={budgetData.map((item) => item.category)}
+              datasets={[
+                {
+                  label: 'Budget',
+                  data: budgetData.map((item) => item.budget ?? 0),
+                  backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                  borderColor: 'rgba(75, 192, 192, 1)',
+                },
+                {
+                  label: 'Actual',
+                  data: budgetData.map((item) => item.spent ?? 0),
+                  backgroundColor: 'rgba(255, 159, 64, 0.6)',
+                  borderColor: 'rgba(255, 159, 64, 1)',
+                },
+              ]}
+            />
+          </div>
+        )}
+
+        {dailyData.length > 0 && (
+          <div className='col-12'>
+            <ChartComponent
+              title='Daily Expense Summary'
+              type='bar'
+              labels={dailyData.map((item) => item.date)}
+              data={dailyData.map((item) => item.total)}
+              backgroundColor='rgba(153, 102, 255, 0.6)'
+            />
+          </div>
+        )}
+
+        {!categoryData.length &&
+          !monthlyData.length &&
+          !budgetData.length &&
+          !dailyData.length && (
+            <div className='col-12'>
+              <div className='card shadow-sm'>
+                <div className='card-body text-center py-5'>
+                  <i className='bi bi-bar-chart fs-1 text-muted mb-3'></i>
+                  <h4 className='mb-3'>No Chart Data Available</h4>
+                  <p className='text-muted'>
+                    Your financial charts will appear here once you have
+                    transaction data.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+      </div>
     </div>
   );
 };

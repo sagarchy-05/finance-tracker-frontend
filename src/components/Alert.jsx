@@ -1,4 +1,3 @@
-// src/components/Alert.jsx
 import React from 'react';
 
 const Alert = ({ type = 'info', message, onClose }) => {
@@ -6,11 +5,16 @@ const Alert = ({ type = 'info', message, onClose }) => {
 
   return (
     <div
-      className={`alert alert-${type} alert-dismissible fade show`}
+      className={`alert alert-${type} alert-dismissible fade show d-flex align-items-center justify-content-between`}
       role='alert'
     >
-      {message}
-      <button type='button' className='btn-close' onClick={onClose}></button>
+      <div className='flex-grow-1 me-3'>{message}</div>
+      <button
+        type='button'
+        className='btn-close flex-shrink-0'
+        onClick={onClose}
+        aria-label='Close'
+      ></button>
     </div>
   );
 };

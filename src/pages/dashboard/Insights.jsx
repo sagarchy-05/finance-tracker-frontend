@@ -1,18 +1,23 @@
-// src/pages/dashboard/Insights.jsx
 import { useEffect, useState } from 'react';
 import Spinner from '../../components/Spinner';
-import { getToken } from '../../utils/token';
 import api from '../../api/axios';
+import { FaLightbulb, FaRegLightbulb, FaSyncAlt } from 'react-icons/fa';
+import { useAuth } from '../../context/AuthContext';
 
 const Insights = () => {
+  const { user } = useAuth();
   const [insights, setInsights] = useState([]);
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [retryTime, setRetryTime] = useState(null);
 
   useEffect(() => {
-    document.title = ' AI Insights - Finance Tracker';
+    document.title = 'AI Insights - Finance Tracker';
+    fetchInsights();
+
+    return () => clearInterval(retryTime?.interval);
   }, []);
 
   const fetchInsights = async () => {
@@ -29,20 +34,24 @@ const Insights = () => {
       setError('');
     } catch (err) {
       console.error('Error fetching insights:', err);
-      setError('Failed to fetch insights.');
+      setError('Failed to fetch insights. Please try again later.');
       setInsights([]);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const generateInsight = async () => {
+    if (retryTime) return;
+
     setGenerating(true);
     setMessage('');
     setError('');
     try {
       const res = await api.post('/insights');
-      if (res.data && res.data.insight?.content) {
+      if (res.data?.insight?.content) {
         setInsights((prev) => [res.data.insight, ...prev]);
+        setMessage('New insight generated successfully!');
       } else if (res.data?.message) {
         setMessage(res.data.message);
       } else {
@@ -50,75 +59,170 @@ const Insights = () => {
       }
     } catch (err) {
       if (err.response?.status === 429) {
-        const retryAfter = err.response.data.retryAfter; // ❗ will break if undefined
-        const minutes = Math.floor(retryAfter / 60);
-        const seconds = retryAfter % 60;
-        setMessage(
-          `Rate limit exceeded. Try again in ${minutes}m ${seconds}s.`
-        );
+        const retryAfter = err.response.data?.retryAfter || 60;
+        startCooldownTimer(retryAfter);
       } else {
         console.error('Error generating insight:', err);
-        if (err.response?.data?.message) {
-          setMessage(err.response.data.message);
-        } else {
-          setError('Could not generate new insight. Try again later.');
-        }
+        setError(
+          err.response?.data?.message ||
+            'Could not generate new insight. Try again later.'
+        );
       }
     } finally {
       setGenerating(false);
     }
   };
 
-  useEffect(() => {
-    fetchInsights();
-  }, []);
+  const startCooldownTimer = (seconds) => {
+    let remaining = seconds;
+
+    const interval = setInterval(() => {
+      remaining -= 1;
+      if (remaining <= 0) {
+        clearInterval(interval);
+        setRetryTime(null);
+      } else {
+        setRetryTime({
+          remaining,
+          interval,
+        });
+      }
+    }, 1000);
+  };
+
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}m ${secs}s`;
+  };
 
   return (
-    <div>
-      <div className='d-flex justify-content-between align-items-center mb-3'>
-        <h2>Your Financial Insights</h2>
+    <div className='container py-3'>
+      <div className='d-flex flex-column flex-md-row justify-content-between align-items-center mb-4'>
+        <div className='text-center text-md-start mb-3 mb-md-0'>
+          <h2 className='fw-bold mb-1'>
+            <FaLightbulb className='text-warning me-2' />
+            Financial Insights
+          </h2>
+          {user?.name && (
+            <p className='text-muted'>Personalized for {user.name}</p>
+          )}
+        </div>
+
         <button
-          className='btn btn-primary'
+          className={`btn ${
+            retryTime ? 'btn-secondary' : 'btn-primary'
+          } d-flex align-items-center`}
           onClick={generateInsight}
-          disabled={generating}
+          disabled={generating || retryTime}
         >
-          {generating ? 'Generating...' : 'Generate Insights'}
+          {generating ? (
+            <>
+              <FaSyncAlt className='me-2 spin' />
+              Generating...
+            </>
+          ) : retryTime ? (
+            `Try again in ${formatTime(retryTime.remaining)}`
+          ) : (
+            <>
+              <FaRegLightbulb className='me-2' />
+              Generate Insight
+            </>
+          )}
         </button>
       </div>
 
       {loading ? (
         <Spinner />
       ) : error ? (
-        <div className='alert alert-danger'>{error}</div>
+        <div className='alert alert-danger d-flex align-items-center'>
+          <i className='bi bi-exclamation-triangle-fill me-2'></i>
+          {error}
+        </div>
       ) : message ? (
-        <div className='alert alert-info'>{message}</div>
+        <div className='alert alert-info d-flex align-items-center'>
+          <i className='bi bi-info-circle-fill me-2'></i>
+          {message}
+        </div>
       ) : insights.length === 0 ? (
-        <div className='alert alert-info'>
-          No insights yet. Generate one to get started!
+        <div className='card shadow-sm'>
+          <div className='card-body text-center py-5'>
+            <FaLightbulb className='text-muted fs-1 mb-3' />
+            <h4>No Insights Yet</h4>
+            <p className='text-muted mb-4'>
+              Generate your first insight to get personalized financial advice
+            </p>
+            <button
+              className='btn btn-primary'
+              onClick={generateInsight}
+              disabled={generating || retryTime}
+            >
+              Generate First Insight
+            </button>
+          </div>
         </div>
       ) : (
-        insights.map((insight, idx) => (
-          <div className='card mb-3' key={idx}>
-            <div className='card-body'>
-              <h5 className='card-title'>Insight #{insights.length - idx}</h5>
-              <ul>
-                {insight.content
-                  .split('\n')
-                  .filter((line) => line.startsWith('-'))
-                  .map((point, i) => (
-                    <li key={i}>{point.replace(/^-\s*/, '')}</li>
-                  ))}
-              </ul>
-              <p className='text-muted'>
-                Generated on{' '}
-                {insight.createdAt
-                  ? new Date(insight.createdAt).toLocaleString()
-                  : 'Unknown time'}
-              </p>
+        <div className='row g-4'>
+          {insights.map((insight, idx) => (
+            <div className='col-12' key={insight._id || idx}>
+              <div className='card shadow-sm border-0'>
+                <div className='card-body'>
+                  <div className='d-flex justify-content-between align-items-start mb-3'>
+                    <h5 className='card-title mb-0'>
+                      <span className='badge bg-warning text-dark me-2'>
+                        Insight #{insights.length - idx}
+                      </span>
+                    </h5>
+                    <small className='text-muted'>
+                      {insight.createdAt
+                        ? new Date(insight.createdAt).toLocaleDateString(
+                            'en-US',
+                            {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            }
+                          )
+                        : 'Recently'}
+                    </small>
+                  </div>
+
+                  <div className='ms-3'>
+                    {insight.content.split('\n').map((line, i) =>
+                      line.startsWith('-') ? (
+                        <div key={i} className='d-flex mb-2'>
+                          <span className='me-2'>•</span>
+                          <span>{line.replace(/^-\s*/, '')}</span>
+                        </div>
+                      ) : line.trim() ? (
+                        <p key={i} className='mb-3'>
+                          {line}
+                        </p>
+                      ) : null
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-        ))
+          ))}
+        </div>
       )}
+
+      <style jsx>{`
+        .spin {
+          animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(360deg);
+          }
+        }
+      `}</style>
     </div>
   );
 };

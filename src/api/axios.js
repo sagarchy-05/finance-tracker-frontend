@@ -1,4 +1,3 @@
-// src/api/axios.js
 import axios from 'axios';
 
 const api = axios.create({
@@ -8,7 +7,7 @@ const api = axios.create({
   },
 });
 
-// 🔐 Automatically attach token to all requests
+// Automatically attach token to all requests
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -20,15 +19,14 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// ❗ Optional: Global error handling
+// Optional: Global error handling
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // You could log out the user on 401, show toast, etc.
     if (error.response?.status === 401) {
       console.warn('Unauthorized — logging out');
       localStorage.removeItem('token');
-      // Optionally redirect: window.location.href = '/login';
+      window.location.href = '/login';
     }
     return Promise.reject(error);
   }

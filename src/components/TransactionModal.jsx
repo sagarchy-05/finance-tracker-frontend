@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import api from '../api/axios';
 import Select from 'react-select';
+import Alert from '../components/Alert';
 
 const TransactionModal = ({ show, onHide, onSave, transaction, budgets }) => {
   const [amount, setAmount] = useState('');
@@ -8,13 +9,14 @@ const TransactionModal = ({ show, onHide, onSave, transaction, budgets }) => {
   const [date, setDate] = useState('');
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
+  const [budgetError, setBudgetError] = useState(null);
 
   const options = budgets.map((b) => ({ label: b, value: b }));
 
-  // Lock scroll on modal open
   useEffect(() => {
     if (show) {
       document.body.classList.add('modal-open');
+      setBudgetError(null);
     } else {
       document.body.classList.remove('modal-open');
     }
@@ -39,10 +41,11 @@ const TransactionModal = ({ show, onHide, onSave, transaction, budgets }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setBudgetError(null);
 
     const todayStr = new Date().toISOString().split('T')[0];
     if (date > todayStr) {
-      window.showToast?.('Transaction date cannot be in the future.', 'danger');
+      setBudgetError('Transaction date cannot be in the future.');
       setLoading(false);
       return;
     }
@@ -65,20 +68,15 @@ const TransactionModal = ({ show, onHide, onSave, transaction, budgets }) => {
         const updatedSpent = matchedBudget.spent - originalAmt + payload.amount;
 
         if (updatedSpent > matchedBudget.limit) {
-          window.showToast?.(
-            transaction
-              ? 'Budget is exceeding, cannot update transaction.'
-              : 'Budget is exceeding, cannot add transaction.',
-            'danger'
-          );
+          setBudgetError(`Transaction exceeds budget for ${category}.`);
           setLoading(false);
           return;
         }
       }
 
-      onSave(payload);
+      await onSave(payload);
     } catch (err) {
-      window.showToast?.('Failed to validate budget.', 'danger');
+      setBudgetError('Failed to validate budget.');
     } finally {
       setLoading(false);
     }
@@ -88,8 +86,11 @@ const TransactionModal = ({ show, onHide, onSave, transaction, budgets }) => {
 
   return (
     <div className='modal show d-block' tabIndex='-1' role='dialog'>
-      <div className='modal-dialog modal-dialog-centered' role='document'>
-        <div className='modal-content'>
+      <div
+        className='modal-dialog modal-dialog-centered modal-dialog-scrollable'
+        role='document'
+      >
+        <div className='modal-content p-3'>
           <div className='modal-header'>
             <h5 className='modal-title'>
               {transaction && Object.keys(transaction).length > 0
@@ -104,28 +105,42 @@ const TransactionModal = ({ show, onHide, onSave, transaction, budgets }) => {
           </div>
 
           <div className='modal-body'>
+            {budgetError && (
+              <Alert
+                type='danger'
+                message={budgetError}
+                onClose={() => setBudgetError(null)}
+                className='mb-3'
+              />
+            )}
+
             <form onSubmit={handleSubmit}>
               <div className='mb-3'>
-                <label>Amount (₹)</label>
+                <label className='form-label'>Amount (₹)</label>
                 <input
                   type='number'
                   className='form-control'
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   required
+                  min='0.01'
+                  step='0.01'
                 />
               </div>
 
               <div className='mb-3'>
-                <label>Category</label>
+                <label className='form-label'>Category</label>
                 <Select
                   options={options}
                   value={options.find((opt) => opt.value === category)}
                   onChange={(selected) => setCategory(selected.value)}
                   placeholder='Select category'
+                  classNamePrefix='Select'
+                  className='mb-2'
                   styles={{
                     menu: (base) => ({
                       ...base,
+                      zIndex: 9999,
                       maxHeight: 200,
                       overflowY: 'auto',
                       scrollbarWidth: 'thin',
@@ -140,7 +155,7 @@ const TransactionModal = ({ show, onHide, onSave, transaction, budgets }) => {
               </div>
 
               <div className='mb-3'>
-                <label>Date</label>
+                <label className='form-label'>Date</label>
                 <input
                   type='date'
                   className='form-control'
@@ -152,7 +167,7 @@ const TransactionModal = ({ show, onHide, onSave, transaction, budgets }) => {
               </div>
 
               <div className='mb-3'>
-                <label>Description</label>
+                <label className='form-label'>Description</label>
                 <input
                   type='text'
                   className='form-control'
@@ -163,7 +178,7 @@ const TransactionModal = ({ show, onHide, onSave, transaction, budgets }) => {
 
               <button
                 type='submit'
-                className='btn btn-primary'
+                className='btn btn-primary w-100'
                 disabled={loading}
               >
                 {loading ? (

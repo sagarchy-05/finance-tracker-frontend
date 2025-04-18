@@ -19,43 +19,56 @@ const BudgetModal = ({
   };
 
   return (
-    <Modal show={show} onHide={onHide} centered>
-      <Modal.Header closeButton>
-        <Modal.Title>{editMode ? 'Edit Budget' : 'Add Budget'}</Modal.Title>
+    <Modal show={show} onHide={onHide} centered size='lg'>
+      <Modal.Header closeButton className='px-4 pt-4'>
+        <Modal.Title as='h5' className='fw-bold'>
+          {editMode ? 'Edit Budget' : 'Add Budget'}
+        </Modal.Title>
       </Modal.Header>
-      <Modal.Body>
+      <Modal.Body className='px-4 pb-4'>
         <Form onSubmit={onSubmit}>
-          <Form.Group className='mb-3'>
-            <Form.Label>Category</Form.Label>
-            <Form.Control
-              type='text'
-              name='category'
-              value={formData.category}
-              onChange={handleChange}
-              placeholder='e.g. Groceries'
-              required
-              disabled={editMode}
-            />
-          </Form.Group>
-          <Form.Group className='mb-3'>
-            <Form.Label>Limit (₹)</Form.Label>
-            <Form.Control
-              type='number'
-              name='limit'
-              value={formData.limit}
-              onChange={handleChange}
-              placeholder='e.g. 300'
-              required
-            />
-          </Form.Group>
-          <Button
-            type='submit'
-            variant='primary'
-            disabled={loading}
-            className='w-100'
-          >
-            {editMode ? 'Update Budget' : 'Add Budget'}
-          </Button>
+          <div className='row g-3'>
+            <Form.Group as='div' className='col-12 col-md-6 mb-3'>
+              <Form.Label>Category</Form.Label>
+              <Form.Control
+                type='text'
+                name='category'
+                value={formData.category}
+                onChange={handleChange}
+                placeholder='e.g. Groceries'
+                required
+                disabled={editMode}
+              />
+            </Form.Group>
+
+            <Form.Group as='div' className='col-12 col-md-6 mb-3'>
+              <Form.Label>Limit (₹)</Form.Label>
+              <Form.Control
+                type='number'
+                name='limit'
+                value={formData.limit}
+                onChange={handleChange}
+                placeholder='e.g. 300'
+                required
+              />
+            </Form.Group>
+
+            <div className='col-12 mt-2'>
+              <Button
+                type='submit'
+                variant='primary'
+                disabled={loading}
+                className='w-100 py-2'
+                size='lg'
+              >
+                {loading
+                  ? 'Processing...'
+                  : editMode
+                  ? 'Update Budget'
+                  : 'Add Budget'}
+              </Button>
+            </div>
+          </div>
         </Form>
       </Modal.Body>
     </Modal>

@@ -1,88 +1,95 @@
-// src/pages/dashboard/Dashboard.jsx
 import React, { useEffect, useState } from 'react';
-import api from '../../api/axios';
-import Chart from '../../components/ChartComponent';
-import Alert from '../../components/Alert';
-import Spinner from '../../components/Spinner';
+import { Link } from 'react-router-dom';
+import { FaChartBar, FaWallet, FaPiggyBank, FaLightbulb } from 'react-icons/fa';
+import { useAuth } from '../../context/AuthContext';
+import financialQuotes from '../../utils/financialQuotes';
 
 const Dashboard = () => {
-  const [categoryTotals, setCategoryTotals] = useState(null);
-  const [monthlyTrends, setMonthlyTrends] = useState(null);
-  const [budgetVsActual, setBudgetVsActual] = useState(null);
-  const [dailySummary, setDailySummary] = useState(null);
-  const [alert, setAlert] = useState({ visible: false, message: '', type: '' });
-  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
+  const [quote, setQuote] = useState('');
+  const [currentTime, setCurrentTime] = useState('');
+  const [userName, setUserName] = useState('');
 
   useEffect(() => {
     document.title = 'Dashboard - Finance Tracker';
-  }, []);
+    setCurrentTime(getTimeOfDay());
+    setQuote(getRandomQuote());
 
-  const fetchDashboardData = async () => {
-    try {
-      const [catRes, monthRes, budgetRes, dailyRes] = await Promise.all([
-        api.get('/charts/category-totals'),
-        api.get('/charts/monthly-trends'),
-        api.get('/charts/budget-vs-actual'),
-        api.get('/charts/daily-summary'),
-      ]);
-
-      setCategoryTotals(catRes.data);
-      setMonthlyTrends(monthRes.data);
-      setBudgetVsActual(budgetRes.data);
-      setDailySummary(dailyRes.data);
-    } catch (error) {
-      setAlert({
-        visible: true,
-        message: 'Failed to load dashboard data.',
-        type: 'danger',
-      });
-    } finally {
-      setLoading(false);
+    if (user?.name) {
+      setUserName(user.name.split(' ')[0]);
     }
+  }, [user]);
+
+  const getTimeOfDay = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'morning';
+    if (hour < 18) return 'afternoon';
+    return 'evening';
   };
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
+  const getRandomQuote = () => {
+    return financialQuotes[Math.floor(Math.random() * financialQuotes.length)];
+  };
+
+  const features = [
+    {
+      title: 'Transactions',
+      description: 'Log, edit, and review your income and expenses.',
+      icon: <FaWallet className='text-primary fs-1 mb-2' />,
+      link: '/transactions',
+    },
+    {
+      title: 'Budgets',
+      description: 'Set and manage spending limits by category.',
+      icon: <FaPiggyBank className='text-success fs-1 mb-2' />,
+      link: '/budgets',
+    },
+    {
+      title: 'Charts',
+      description: 'Visualize your spending trends and daily activity.',
+      icon: <FaChartBar className='text-info fs-1 mb-2' />,
+      link: '/charts',
+    },
+    {
+      title: 'Insights',
+      description: 'Get AI-generated suggestions for better budgeting.',
+      icon: <FaLightbulb className='text-warning fs-1 mb-2' />,
+      link: '/insights',
+    },
+  ];
 
   return (
     <div className='container py-4'>
-      <h2 className='mb-4 text-center'>Dashboard</h2>
-
-      {alert.visible && (
-        <Alert
-          type={alert.type}
-          message={alert.message}
-          onClose={() => setAlert({ ...alert, visible: false })}
-        />
-      )}
-
-      {loading ? (
-        <Spinner />
-      ) : (
-        <div className='row g-4'>
-          <div className='col-md-6'>
-            <Chart title='Category Totals' type='pie' data={categoryTotals} />
-          </div>
-          <div className='col-md-6'>
-            <Chart
-              title='Monthly Spending Trends'
-              type='line'
-              data={monthlyTrends}
-            />
-          </div>
-          <div className='col-md-6'>
-            <Chart title='Budget vs Actual' type='bar' data={budgetVsActual} />
-          </div>
-          <div className='col-md-6'>
-            <Chart
-              title='Daily Expense Summary'
-              type='line'
-              data={dailySummary}
-            />
+      <div className='text-center mb-4'>
+        <h2 className='fw-bold mb-3 display-5'>
+          Good {currentTime}
+          {userName ? `, ${userName}` : ''}!
+        </h2>
+        <div
+          className='card bg-light border-0 shadow-sm mb-4 mx-auto'
+          style={{ maxWidth: '800px' }}
+        >
+          <div className='card-body py-3'>
+            <p className='lead mb-0 fst-italic'>"{quote}"</p>
           </div>
         </div>
-      )}
+      </div>
+
+      <div className='row g-4'>
+        {features.map((feature, idx) => (
+          <div className='col-md-6 col-lg-3' key={idx}>
+            <Link to={feature.link} className='text-decoration-none'>
+              <div className='card h-100 shadow-sm border-0 hover-shadow transition-all'>
+                <div className='card-body text-center p-4'>
+                  {feature.icon}
+                  <h5 className='card-title mt-2'>{feature.title}</h5>
+                  <p className='card-text text-muted'>{feature.description}</p>
+                </div>
+              </div>
+            </Link>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

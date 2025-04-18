@@ -1,4 +1,3 @@
-// utils/authWatcher.js
 import { isTokenExpired, clearToken } from './token';
 
 export const startAuthWatcher = (logoutCallback) => {

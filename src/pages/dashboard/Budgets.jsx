@@ -15,6 +15,7 @@ const Budget = () => {
 
   useEffect(() => {
     document.title = 'Budgets - Finance Tracker';
+    fetchBudgets();
   }, []);
 
   const fetchBudgets = async () => {
@@ -22,15 +23,15 @@ const Budget = () => {
       const res = await api.get('/budgets');
       setBudgets(res.data);
     } catch (err) {
-      console.error('Failed to fetch budgets:', err);
+      setAlert({
+        type: 'danger',
+        message: 'Failed to fetch budgets',
+        visible: true,
+      });
     } finally {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    fetchBudgets();
-  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -52,6 +53,7 @@ const Budget = () => {
             visible: true,
           });
           setLoading(false);
+          setShowModal(false);
           return;
         }
 
@@ -60,6 +62,7 @@ const Budget = () => {
         updatedBudgets.push({
           category: formData.category,
           limit: parseFloat(formData.limit),
+          spent: 0,
         });
       }
 
@@ -83,6 +86,7 @@ const Budget = () => {
         message: error.response?.data?.message || 'Failed to save budget',
         visible: true,
       });
+    } finally {
       setLoading(false);
     }
   };
@@ -111,13 +115,35 @@ const Budget = () => {
       return;
     }
 
-    if (!window.confirm(`Delete budget for ${category}?`)) return;
+    const budgetToDelete = budgets.find((b) => b.category === category);
+    if (budgetToDelete?.spent > 0) {
+      setAlert({
+        type: 'danger',
+        message: `Cannot delete "${category}" as it has existing transactions (₹${budgetToDelete.spent.toFixed(
+          2
+        )} spent)`,
+        visible: true,
+      });
+      return;
+    }
+
+    if (
+      !window.confirm(
+        `Are you sure you want to delete the "${category}" budget?`
+      )
+    ) {
+      return;
+    }
 
     try {
       await api.delete(`/budgets/${category}`);
+      setAlert({
+        type: 'success',
+        message: `"${category}" budget deleted successfully`,
+        visible: true,
+      });
       fetchBudgets();
     } catch (error) {
-      console.error('Failed to delete budget:', error);
       setAlert({
         type: 'danger',
         message: error.response?.data?.message || 'Failed to delete budget',
@@ -126,12 +152,20 @@ const Budget = () => {
     }
   };
 
+  const getProgressVariant = (spent, limit) => {
+    if (!limit || limit === 0) return 'secondary';
+    const percentage = (spent / limit) * 100;
+    if (percentage >= 90) return 'danger';
+    if (percentage >= 75) return 'warning';
+    return 'success';
+  };
+
   return (
-    <div className='container mt-4'>
-      <div className='d-flex justify-content-between align-items-center mb-3'>
-        <h2 className='mb-0'>Manage Budgets</h2>
+    <div className='container py-4'>
+      <div className='d-flex flex-column flex-md-row justify-content-between align-items-center mb-4'>
+        <h2 className='mb-3 mb-md-0 fw-bold'>Manage Budgets</h2>
         <button className='btn btn-success' onClick={openAddModal}>
-          Add Budget
+          <i className='bi bi-plus-lg me-2'></i>Add Budget
         </button>
       </div>
 
@@ -140,53 +174,101 @@ const Budget = () => {
           type={alert.type}
           message={alert.message}
           onClose={() => setAlert({ ...alert, visible: false })}
+          className='mb-4'
         />
       )}
 
       {loading ? (
-        <div
-          className='d-flex justify-content-center align-items-center'
-          style={{ minHeight: '200px' }}
-        >
-          <Spinner />
+        <Spinner />
+      ) : budgets.length === 0 ? (
+        <div className='card shadow-sm'>
+          <div className='card-body text-center py-5'>
+            <i className='bi bi-piggy-bank fs-1 text-muted mb-3'></i>
+            <h5 className='mb-3'>No Budgets Found</h5>
+            <p className='text-muted mb-4'>Start by adding your first budget</p>
+            <button className='btn btn-primary' onClick={openAddModal}>
+              <i className='bi bi-plus-lg me-2'></i>Add Budget
+            </button>
+          </div>
         </div>
       ) : (
-        <table className='table table-bordered'>
-          <thead className='table-light'>
-            <tr>
-              <th>Category</th>
-              <th>Limit</th>
-              <th>Spent</th>
-              <th>Remaining</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {budgets.map((budget) => (
-              <tr key={budget.category}>
-                <td>{budget.category}</td>
-                <td>₹{budget.limit.toFixed(2)}</td>
-                <td>₹{budget.spent?.toFixed(2) || 0}</td>
-                <td>₹{(budget.limit - (budget.spent || 0)).toFixed(2)}</td>
-                <td>
-                  <button
-                    className='btn btn-sm btn-warning me-2'
-                    onClick={() => handleEdit(budget)}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    className='btn btn-sm btn-danger'
-                    onClick={() => handleDelete(budget.category)}
-                    disabled={budget.category === 'Others'}
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className='card shadow-sm'>
+          <div className='table-responsive'>
+            <table className='table table-sm align-middle mb-0'>
+              <thead className='table-light'>
+                <tr>
+                  <th className='ps-3'>Category</th>
+                  <th className='text-end pe-3'>Limit</th>
+                  <th className='text-end pe-3'>Spent</th>
+                  <th className='text-end pe-3'>Remaining</th>
+                  <th className='text-center'>Progress</th>
+                  <th className='text-end pe-3'>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {budgets.map((budget) => (
+                  <tr key={budget.category}>
+                    <td className='ps-3 fw-medium'>{budget.category}</td>
+                    <td className='text-end pe-3'>
+                      ₹{budget.limit?.toFixed(2) || '0.00'}
+                    </td>
+                    <td className='text-end pe-3'>
+                      ₹{(budget.spent || 0).toFixed(2)}
+                    </td>
+                    <td className='text-end pe-3 fw-bold'>
+                      ₹{((budget.limit || 0) - (budget.spent || 0)).toFixed(2)}
+                    </td>
+                    <td>
+                      <div className='mx-2'>
+                        <div className='progress' style={{ height: '6px' }}>
+                          <div
+                            className={`progress-bar bg-${getProgressVariant(
+                              budget.spent || 0,
+                              budget.limit
+                            )}`}
+                            style={{
+                              width: `${Math.min(
+                                100,
+                                ((budget.spent || 0) / (budget.limit || 1)) *
+                                  100
+                              )}%`,
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </td>
+                    <td className='text-end pe-3'>
+                      <div className='d-flex justify-content-end'>
+                        <button
+                          className='btn btn-sm btn-outline-primary me-2'
+                          onClick={() => handleEdit(budget)}
+                        >
+                          <i className='bi bi-pencil'></i>
+                        </button>
+                        <button
+                          className='btn btn-sm btn-outline-danger'
+                          onClick={() => handleDelete(budget.category)}
+                          disabled={
+                            budget.category === 'Others' || budget.spent > 0
+                          }
+                          title={
+                            budget.category === 'Others'
+                              ? 'Default category cannot be deleted'
+                              : budget.spent > 0
+                              ? 'Cannot delete category with transactions'
+                              : ''
+                          }
+                        >
+                          <i className='bi bi-trash'></i>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       )}
 
       <BudgetModal
