@@ -5,7 +5,15 @@ const exportToPDF = async (elementId, filename = 'report.pdf') => {
   const input = document.getElementById(elementId);
   if (!input) return alert('Element not found!');
 
-  const canvas = await html2canvas(input, { scale: 2 });
+  const canvas = await html2canvas(input, {
+    scale: 2,
+    ignoreElements: (element) => {
+      return (
+        element.style.display === 'none' ||
+        element.style.visibility === 'hidden'
+      );
+    },
+  });
   const imgData = canvas.toDataURL('image/png');
 
   const pdf = new jsPDF('p', 'mm', 'a4');

@@ -118,27 +118,30 @@ const ChartComponent = ({
         },
       },
     },
-    scales: {
-      x: {
-        ticks: {
-          maxRotation: window.innerWidth < 768 ? 45 : 0,
-          font: {
-            size: window.innerWidth < 768 ? 10 : 12,
+    scales:
+      type === 'pie'
+        ? {}
+        : {
+            x: {
+              ticks: {
+                maxRotation: window.innerWidth < 768 ? 45 : 0,
+                font: {
+                  size: window.innerWidth < 768 ? 10 : 12,
+                },
+              },
+              grid: {
+                display: false,
+              },
+            },
+            y: {
+              beginAtZero: true,
+              ticks: {
+                font: {
+                  size: window.innerWidth < 768 ? 10 : 12,
+                },
+              },
+            },
           },
-        },
-        grid: {
-          display: false,
-        },
-      },
-      y: {
-        beginAtZero: true,
-        ticks: {
-          font: {
-            size: window.innerWidth < 768 ? 10 : 12,
-          },
-        },
-      },
-    },
     maintainAspectRatio: false,
   };
 

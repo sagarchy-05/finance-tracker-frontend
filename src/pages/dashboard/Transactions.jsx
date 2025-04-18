@@ -33,6 +33,56 @@ const Transactions = () => {
     }
   }, [selectedCategory, transactions]);
 
+  const exportFilteredTransactions = async () => {
+    // Create a temporary table with only the columns we want to export
+    const tempTable = document.createElement('table');
+    tempTable.className = 'table table-hover mb-0';
+    tempTable.id = 'tempPdfTable';
+
+    // Create table header
+    const thead = document.createElement('thead');
+    thead.className = 'table-light';
+    thead.innerHTML = `
+    <tr>
+      <th>Date</th>
+      <th>Category</th>
+      <th>Amount</th>
+      <th>Description</th>
+    </tr>
+  `;
+    tempTable.appendChild(thead);
+
+    // Create table body with filtered data
+    const tbody = document.createElement('tbody');
+    filteredTransactions.forEach((tx) => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+      <td>${new Date(tx.date).toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      })}</td>
+      <td>${tx.category}</td>
+      <td>₹${tx.amount.toFixed(2)}</td>
+      <td>${tx.description || '-'}</td>
+    `;
+      tbody.appendChild(row);
+    });
+    tempTable.appendChild(tbody);
+
+    // Add the temporary table to the DOM (hidden)
+    tempTable.style.position = 'absolute';
+    tempTable.style.left = '-9999px';
+    document.body.appendChild(tempTable);
+
+    try {
+      await exportToPDF('tempPdfTable', 'transactions.pdf');
+    } finally {
+      // Clean up the temporary table
+      document.body.removeChild(tempTable);
+    }
+  };
+
   const fetchTransactions = async () => {
     setLoading(true);
     try {
@@ -163,7 +213,7 @@ const Transactions = () => {
 
           <button
             className='btn btn-outline-danger d-flex align-items-center py-2'
-            onClick={() => exportToPDF('transactionsTable', 'transactions.pdf')}
+            onClick={exportFilteredTransactions}
           >
             <FaFilePdf className='me-1' />
             <span className='d-none d-sm-inline'>Export</span>
