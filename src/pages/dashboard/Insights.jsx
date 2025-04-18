@@ -35,7 +35,7 @@ const Insights = () => {
     } catch (err) {
       console.error('Error fetching insights:', err);
       setError('Failed to fetch insights. Please try again later.');
-      setInsights([]);
+      // Don't clear existing insights on fetch error
     } finally {
       setLoading(false);
     }
@@ -46,7 +46,7 @@ const Insights = () => {
 
     setGenerating(true);
     setMessage('');
-    setError('');
+    setError(''); // Clear previous error
     try {
       const res = await api.post('/insights');
       if (res.data?.insight?.content) {
@@ -68,6 +68,7 @@ const Insights = () => {
             'Could not generate new insight. Try again later.'
         );
       }
+      // Keep existing insights when generation fails
     } finally {
       setGenerating(false);
     }
@@ -132,15 +133,18 @@ const Insights = () => {
         </button>
       </div>
 
-      {loading ? (
-        <Spinner />
-      ) : error ? (
-        <div className='alert alert-danger d-flex align-items-center'>
+      {/* Error message appears above insights when generation fails */}
+      {error && (
+        <div className='alert alert-danger d-flex align-items-center mb-4'>
           <i className='bi bi-exclamation-triangle-fill me-2'></i>
           {error}
         </div>
+      )}
+
+      {loading ? (
+        <Spinner />
       ) : message ? (
-        <div className='alert alert-info d-flex align-items-center'>
+        <div className='alert alert-info d-flex align-items-center mb-4'>
           <i className='bi bi-info-circle-fill me-2'></i>
           {message}
         </div>
@@ -162,55 +166,58 @@ const Insights = () => {
           </div>
         </div>
       ) : (
-        <div className='row g-4'>
-          {insights.map((insight, idx) => (
-            <div className='col-12' key={insight._id || idx}>
-              <div className='card shadow-sm border-0'>
-                <div className='card-body'>
-                  <div className='d-flex justify-content-between align-items-start mb-3'>
-                    <h5 className='card-title mb-0'>
-                      <span className='badge bg-warning text-dark me-2'>
-                        Insight #{insights.length - idx}
-                      </span>
-                    </h5>
-                    <small className='text-muted'>
-                      {insight.createdAt
-                        ? new Date(insight.createdAt).toLocaleDateString(
-                            'en-US',
-                            {
-                              year: 'numeric',
-                              month: 'short',
-                              day: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            }
-                          )
-                        : 'Recently'}
-                    </small>
-                  </div>
+        <>
+          {/* Existing insights remain visible even if there's an error */}
+          <div className='row g-4'>
+            {insights.map((insight, idx) => (
+              <div className='col-12' key={insight._id || idx}>
+                <div className='card shadow-sm border-0'>
+                  <div className='card-body'>
+                    <div className='d-flex justify-content-between align-items-start mb-3'>
+                      <h5 className='card-title mb-0'>
+                        <span className='badge bg-warning text-dark me-2'>
+                          Insight #{insights.length - idx}
+                        </span>
+                      </h5>
+                      <small className='text-muted'>
+                        {insight.createdAt
+                          ? new Date(insight.createdAt).toLocaleDateString(
+                              'en-US',
+                              {
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              }
+                            )
+                          : 'Recently'}
+                      </small>
+                    </div>
 
-                  <div className='ms-3'>
-                    {insight.content.split('\n').map((line, i) =>
-                      line.startsWith('-') ? (
-                        <div key={i} className='d-flex mb-2'>
-                          <span className='me-2'>•</span>
-                          <span>{line.replace(/^-\s*/, '')}</span>
-                        </div>
-                      ) : line.trim() ? (
-                        <p key={i} className='mb-3'>
-                          {line}
-                        </p>
-                      ) : null
-                    )}
+                    <div className='ms-3'>
+                      {insight.content.split('\n').map((line, i) =>
+                        line.startsWith('-') ? (
+                          <div key={i} className='d-flex mb-2'>
+                            <span className='me-2'>•</span>
+                            <span>{line.replace(/^-\s*/, '')}</span>
+                          </div>
+                        ) : line.trim() ? (
+                          <p key={i} className='mb-3'>
+                            {line}
+                          </p>
+                        ) : null
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </>
       )}
 
-      <style jsx>{`
+      <style>{`
         .spin {
           animation: spin 1s linear infinite;
         }
